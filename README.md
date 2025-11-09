@@ -25,21 +25,22 @@ It allows users to:
 
 ## Architecture
 PDF Document → Text Splitter → Embeddings → Chroma Vector Store → Retriever → LLM (Mistral 7B) → Response
+```python
+#1.Install Dependencies
 
-### 1.Install Dependencies
 !pip install -U langchain
 !pip install chromadb
 !pip install pypdf
 
-### 2.Load Environment Variables (API KEYS)
+#2.Load Environment Variables (API KEYS)
 from dotenv import load_dotenv
 load_dotenv()
 For Google Colab:
 from google.colab import userdata
 userdata.get('HUGGINGFACEHUB_API_TOKEN')
 
-### 3.Step-by-Step Implementation
-1.Load pdf:
+#3.Step-by-Step Implementation
+#1.Load pdf:
 from  langchain_community.document_loaders import PyPDFLoader
 pdf_path=r'/content/TechNet-One-Pager-on-AI-and-Gen-AI.pdf'
 pdf=PyPDFLoader(pdf_path)
@@ -47,25 +48,27 @@ pdf_data=pdf.load()
 #pdf_data[0]should print the metadatd n content of pdf page 1
 
 
-2.Split text into chunks:
+#2.Split text into chunks:
 from langchain_text_splitters import CharacterTextSplitter
 text_splitter=CharacterTextSplitter(chunk_size=200,chunk_overlap=20,separator='\n')
 chunks=text_splitter.split_documents(pdf_data)
 print(len(chunks)) #to check if there are chunks
 
-3.Generate Embeddings:
+#3.Generate Embeddings:
 from langchain_huggingface import HuggingFaceEmbeddings
 model_name="sentence-transformers/paraphrase-MiniLM-L3-v2"
 hf=HuggingFaceEmbeddings(
     model_name=model_name,
 )
 
-4.Vector store:
+#4.Vector store:
+docsearch=Chroma.from_documents(chunks,hf)
 
-5.Create Retriever:
+
+#5.Create Retriever:
 retriever = docsearch.as_retriever()
 
-6.Intialize Hugging face llm:
+#6.Intialize Hugging face llm:
 from langchain_huggingface import HuggingFaceEndpoint, ChatHuggingFace
 
 llm_HFE = HuggingFaceEndpoint(
@@ -80,7 +83,7 @@ llm_HFE = HuggingFaceEndpoint(
 )
 llm = ChatHuggingFace(llm=llm_HFE)
 
-7.Define RAG Chain:
+#7.Define RAG Chain:
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough, RunnableLambda
 from langchain_core.output_parsers import StrOutputParser
@@ -107,11 +110,11 @@ chain = (
     | StrOutputParser()
 )
 
-8.Run the Chain:
+#8.Run the Chain:
 result = chain.invoke('What is Artificial Intelligence?')
 print(result)
 
-9.Add chat memory:
+#9.Add chat memory:
 from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain_core.runnables import RunnableWithMessageHistory
 
@@ -142,14 +145,14 @@ response = History_chain.invoke(
 print(response)
 
 
-10. Inspect stored Messages:
+#10. Inspect stored Messages:
 session_id = 'user1'
 for message in _sessionstore[session_id].messages:
     print(message)
 
 ### 4. Example Output:
 Artificial Intelligence (AI) refers to the ability of machines to perform tasks that typically require human intelligence such as learning, reasoning, and problem-solving.
-
+```
 ##License
 
 This project is open-source and available under the MIT License.
